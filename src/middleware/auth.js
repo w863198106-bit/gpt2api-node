@@ -3,48 +3,27 @@ import { User, ApiKey } from '../models/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// JWT 认证中间件（用于管理后台）
+// JWT 认证中间件 - 已修改为直接放行
 export function authenticateJWT(req, res, next) {
-  const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
-
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
+  return next(); 
 }
 
-// Session 认证中间件（用于管理后台）
+// Session 认证中间件 - 已修改为直接放行
 export function authenticateAdmin(req, res, next) {
-  if (!req.session?.userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
+  return next();
 }
 
-// API Key 认证中间件（用于代理接口）
+// API Key 认证中间件 - 保持原样以保护接口
 export function authenticateApiKey(req, res, next) {
   const apiKey = req.headers['x-api-key'] || req.headers.authorization?.replace('Bearer ', '');
-
   if (!apiKey) {
     return res.status(401).json({ error: 'API key required' });
   }
-
   const keyData = ApiKey.findByKey(apiKey);
-
   if (!keyData) {
     return res.status(403).json({ error: 'Invalid API key' });
   }
-
-  // 更新使用统计
   ApiKey.updateUsage(keyData.id);
-
   req.apiKey = keyData;
   next();
 }
